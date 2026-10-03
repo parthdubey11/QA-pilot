@@ -6,7 +6,22 @@ cases (including edge cases), run them, judge the results, report bugs with scre
 and audit accessibility (WCAG). You watch the run live. Passing tests are saved, re-run on a schedule, and heal
 themselves when the UI changes.
 
-Final-year CSE project. The full brief is in [`CLAUDE.md`](CLAUDE.md).
+Final-year CSE project. The full brief is in [`claude.md`](claude.md).
+
+## Try it live
+
+| | Link | |
+|---|---|---|
+| **QA Pilot** | **https://qapilot-172-198-59-99.sslip.io** | Create a free account, then add a project |
+| **Demo shop** | **https://shop-172-198-59-99.sslip.io** | A deliberately buggy shop to test. Use this as the project's base URL |
+
+1. Open QA Pilot and **create an account**.
+2. **Add a project** with the base URL `https://shop-172-198-59-99.sslip.io/`.
+3. **Start a run**, e.g. "test signup and adding a product to the cart", and watch the agents work live.
+   They find planted bugs such as the out-of-stock item that can still be added to the cart.
+
+The public server shares a free AI quota, so each account gets 2 AI runs a day (max 6 tests per run). Replays of
+saved tests are unlimited. If the link doesn't load, the server may be paused to save credits; try again later.
 
 | Project overview | Live run |
 |---|---|
