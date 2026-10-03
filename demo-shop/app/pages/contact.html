@@ -1,0 +1,29 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Contact us | Demo Shop</title>
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+{{header}}
+<main>
+  <h1>Contact us</h1>
+  <form id="contact-form" class="stack" novalidate>
+    <label for="contact-name">Your name</label>
+    <input id="contact-name" name="name" autocomplete="name">
+    <label for="contact-email">Email</label>
+    <input id="contact-email" name="email" type="text" autocomplete="email">
+    <label for="contact-message">Message</label>
+    <textarea id="contact-message" name="message" rows="5"></textarea>
+    <button type="submit" class="btn" id="{{id:contact_submit}}" data-action="contact">{{label:contact_submit}}</button>
+  </form>
+  <p role="alert" id="contact-error" class="error"></p>
+  <p role="status" id="contact-success"></p>
+</main>
+{{footer}}
+<script src="/static/js/common.js"></script>
+<script src="/static/js/contact.js"></script>
+</body>
+</html>

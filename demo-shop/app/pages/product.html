@@ -1,0 +1,34 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+  <title>Product | Demo Shop</title>
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+{{header}}
+<main>
+  <p><a href="/">&larr; Back to products</a></p>
+  <article class="product-detail" id="product-detail" hidden>
+    <img id="product-image" src="" alt="">
+    <div>
+      <h1 id="product-name"></h1>
+      <p class="price" id="product-price"></p>
+      <p class="product-description" id="product-description"></p>
+      <p id="product-stock"></p>
+      <form id="add-form" class="stack">
+        <label for="quantity">Quantity</label>
+        <input id="quantity" name="quantity" type="number" min="1" value="1">
+        <button type="submit" class="btn" id="{{id:add_to_cart}}" data-action="add-to-cart">{{label:add_to_cart}}</button>
+      </form>
+      <p role="status" id="add-status"></p>
+    </div>
+  </article>
+  <p id="not-found" hidden>Sorry, we couldn't find that product.</p>
+</main>
+{{footer}}
+<script src="/static/js/common.js"></script>
+<script src="/static/js/product.js"></script>
+</body>
+</html>

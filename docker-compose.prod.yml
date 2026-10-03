@@ -1,0 +1,98 @@
+# Production stack for one Linux server (e.g. Oracle Cloud Always Free). See deploy/README.md.
+#   docker compose -f docker-compose.prod.yml --env-file .env up -d --build
+# Differences from the dev compose: no source mounts or --reload, a built frontend, nothing exposed except Caddy
+# (80/443, automatic HTTPS), restart policies, log rotation, and the demo shop's public safeguards switched on.
+
+x-logging: &logging
+  driver: json-file
+  options: { max-size: "10m", max-file: "3" }
+
+services:
+  mongo:
+    image: mongo:7
+    restart: unless-stopped
+    logging: *logging
+    volumes:
+      - mongo-data:/data/db
+    healthcheck:
+      test: ["CMD", "mongosh", "--quiet", "--eval", "db.adminCommand('ping').ok"]
+      interval: 10s
+      timeout: 5s
+      retries: 20
+      start_period: 20s
+
+  api:
+    build: ./backend
+    restart: unless-stopped
+    logging: *logging
+    env_file: .env
+    environment:
+      MONGO_URL: mongodb://mongo:27017
+      STORAGE_DIR: /storage
+    command: ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--proxy-headers", "--forwarded-allow-ips", "*"]
+    volumes:
+      - qapilot-files:/storage
+    depends_on:
+      mongo:
+        condition: service_healthy
+
+  worker:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile.worker
+    restart: unless-stopped
+    logging: *logging
+    env_file: .env
+    environment:
+      MONGO_URL: mongodb://mongo:27017
+      STORAGE_DIR: /storage
+    shm_size: 1gb  # Chromium needs more shared memory than Docker's 64 MB default
+    volumes:
+      - qapilot-files:/storage
+    depends_on:
+      mongo:
+        condition: service_healthy
+
+  demo-shop:
+    build: ./demo-shop
+    restart: unless-stopped
+    logging: *logging
+    command: ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--proxy-headers", "--forwarded-allow-ips", "*"]
+    environment:
+      UI_VARIANT: v1
+      RESET_TOKEN: ${DEMO_SHOP_RESET_TOKEN:?set DEMO_SHOP_RESET_TOKEN in .env}
+      TRUST_PROXY: "1"
+      RATE_LIMIT_PER_MINUTE: ${DEMO_SHOP_RATE_LIMIT_PER_MINUTE:-600}
+      NIGHTLY_RESET_HOUR_UTC: ${DEMO_SHOP_NIGHTLY_RESET_HOUR_UTC:-3}
+
+  # Edge: HTTPS (Let's Encrypt), the built dashboard, /api -> api, and the shop on its own host name.
+  caddy:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile.prod
+    restart: unless-stopped
+    logging: *logging
+    ports:
+      - "80:80"
+      - "443:443"
+    environment:
+      QAPILOT_DOMAIN: ${QAPILOT_DOMAIN:?set QAPILOT_DOMAIN in .env}
+      SHOP_DOMAIN: ${SHOP_DOMAIN:?set SHOP_DOMAIN in .env}
+    volumes:
+      - caddy-data:/data
+      - caddy-config:/config
+    networks:
+      default:
+        # The worker opens the shop by its public URL; these aliases keep that traffic inside the server.
+        aliases:
+          - ${QAPILOT_DOMAIN}
+          - ${SHOP_DOMAIN}
+    depends_on:
+      - api
+      - demo-shop
+
+volumes:
+  mongo-data:
+  qapilot-files:
+  caddy-data:
+  caddy-config:

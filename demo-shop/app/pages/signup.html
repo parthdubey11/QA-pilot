@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Sign up | Demo Shop</title>
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+{{header}}
+<main>
+  <h1>Create an account</h1>
+  <form id="signup-form" class="stack" novalidate>
+    <label for="signup-name">Full name</label>
+    <input id="signup-name" name="name" autocomplete="name">
+    <div class="field-label">Email</div>
+    <input id="signup-email" name="email" type="email" autocomplete="email">
+    <label for="signup-password">Password</label>
+    <input id="signup-password" name="password" type="password" autocomplete="new-password" aria-describedby="password-hint">
+    <p id="password-hint" class="hint">At least 8 characters.</p>
+    <button type="submit" class="btn" id="{{id:signup_submit}}" data-action="signup">{{label:signup_submit}}</button>
+  </form>
+  <p role="alert" id="signup-error" class="error"></p>
+  <p role="status" id="signup-success"></p>
+</main>
+{{footer}}
+<script src="/static/js/common.js"></script>
+<script src="/static/js/signup.js"></script>
+</body>
+</html>

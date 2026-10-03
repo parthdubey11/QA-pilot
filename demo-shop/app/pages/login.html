@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+{{header}}
+<main>
+  <h1>Log in</h1>
+  <form id="login-form" class="stack" novalidate>
+    <label for="{{id:login_email}}">{{label:login_email}}</label>
+    <input id="{{id:login_email}}" name="email" type="email" autocomplete="username">
+    <label for="login-password">Password</label>
+    <input id="login-password" name="password" type="password" autocomplete="current-password">
+    <button type="submit" class="btn" id="{{id:login_submit}}" data-action="login">{{label:login_submit}}</button>
+  </form>
+  <p role="alert" id="login-error" class="error"></p>
+  <p>New here? <a href="/signup">Create an account</a></p>
+</main>
+{{footer}}
+<script src="/static/js/common.js"></script>
+<script src="/static/js/login.js"></script>
+</body>
+</html>

@@ -1,0 +1,20 @@
+<header class="site-header">
+  {{banner}}
+  <a href="/" class="brand">Demo Shop</a>
+  <nav aria-label="Main">
+    <a href="/">Products</a>
+    <a href="/contact">Contact</a>
+    <span data-auth="guest">
+      <a href="/login" id="{{id:nav_login}}">{{label:nav_login}}</a>
+      <a href="/signup">Sign up</a>
+    </span>
+    <span data-auth="user" hidden>
+      Hi, <span data-user-name></span>
+      <button type="button" class="btn btn-link" data-action="logout">Log out</button>
+    </span>
+    <a href="/cart" class="cart-link">
+      <svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="20" r="1.5"/><circle cx="18" cy="20" r="1.5"/><path d="M2 3h3l2.4 11.2a2 2 0 0 0 2 1.6h8.3a2 2 0 0 0 2-1.5L22 7H6"/></svg>
+    </a>
+    <span class="cart-count" id="cart-count">0</span>
+  </nav>
+</header>

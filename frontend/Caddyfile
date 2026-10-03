@@ -1,0 +1,44 @@
+# Used by Dockerfile.prod (docker-compose.prod.yml). Host names come from the environment.
+
+(security_headers) {
+	header {
+		Strict-Transport-Security "max-age=31536000"
+		X-Content-Type-Options "nosniff"
+		Referrer-Policy "strict-origin-when-cross-origin"
+		-Server
+	}
+}
+
+{$QAPILOT_DOMAIN} {
+	import security_headers
+	encode zstd gzip
+	request_body {
+		max_size 1MB
+	}
+
+	# API (the dashboard calls /api/...; the API itself has no /api prefix)
+	handle_path /api/* {
+		reverse_proxy api:8000 {
+			flush_interval -1 # Server-Sent Events: stream live run steps immediately
+		}
+	}
+
+	# Dashboard (single-page app)
+	handle {
+		header X-Frame-Options "DENY"
+		root * /srv
+		try_files {path} /index.html
+		file_server
+		@assets path /assets/*
+		header @assets Cache-Control "public, max-age=31536000, immutable"
+	}
+}
+
+{$SHOP_DOMAIN} {
+	import security_headers
+	encode zstd gzip
+	request_body {
+		max_size 64KB
+	}
+	reverse_proxy demo-shop:8000
+}

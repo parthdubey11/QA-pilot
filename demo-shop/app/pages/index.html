@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Products | Demo Shop</title>
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+{{header}}
+<main>
+  <h1>Products</h1>
+  <p class="sort">
+    <label for="sort">Sort by</label>
+    <select id="sort" name="sort">
+      <option value="featured">Featured</option>
+      <option value="price-asc">Price: low to high</option>
+      <option value="price-desc">Price: high to low</option>
+      <option value="name">Name</option>
+    </select>
+  </p>
+  <ul class="product-grid" id="product-grid"></ul>
+</main>
+{{footer}}
+<script src="/static/js/common.js"></script>
+<script src="/static/js/index.js"></script>
+</body>
+</html>

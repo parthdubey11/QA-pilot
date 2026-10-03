@@ -1,0 +1,14 @@
+# Official Playwright image: Chromium and its system libraries are preinstalled.
+# Keep the tag in sync with the playwright version in requirements-worker.txt.
+FROM mcr.microsoft.com/playwright/python:v1.63.0-noble
+
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1
+
+WORKDIR /app
+COPY requirements.txt requirements-dev.txt requirements-worker.txt ./
+RUN pip install --no-cache-dir -r requirements-worker.txt -r requirements-dev.txt
+
+COPY . .
+
+CMD ["python", "-m", "worker.main"]

@@ -1,0 +1,71 @@
+services:
+  mongo:
+    image: mongo:7
+    ports:
+      - "27017:27017"  # browse with MongoDB Compass: mongodb://localhost:27017
+    volumes:
+      - mongo-data:/data/db
+    healthcheck:
+      test: ["CMD", "mongosh", "--quiet", "--eval", "db.adminCommand('ping').ok"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+      start_period: 10s
+
+  api:
+    build: ./backend
+    env_file: .env
+    environment:
+      MONGO_URL: mongodb://mongo:27017
+      STORAGE_DIR: /storage
+      TEST_MONGO_URL: mongodb://mongo:27017
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./backend:/app
+      - qapilot-files:/storage
+    depends_on:
+      mongo:
+        condition: service_healthy
+
+  worker:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile.worker
+    env_file: .env
+    environment:
+      MONGO_URL: mongodb://mongo:27017
+      STORAGE_DIR: /storage
+      TEST_MONGO_URL: mongodb://mongo:27017
+    volumes:
+      - ./backend:/app
+      - qapilot-files:/storage
+    depends_on:
+      mongo:
+        condition: service_healthy
+
+  frontend:
+    build: ./frontend
+    environment:
+      VITE_API_PROXY_TARGET: http://api:8000
+      CHOKIDAR_USEPOLLING: "true"
+    ports:
+      - "5173:5173"
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    depends_on:
+      - api
+
+  demo-shop:
+    build: ./demo-shop
+    environment:
+      UI_VARIANT: ${DEMO_SHOP_UI_VARIANT:-v1}  # v2 renames buttons/labels (self-healing demo)
+    ports:
+      - "8080:8000"
+    volumes:
+      - ./demo-shop:/app
+
+volumes:
+  mongo-data:
+  qapilot-files:

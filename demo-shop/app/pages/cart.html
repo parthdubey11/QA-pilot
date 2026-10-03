@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Your cart | Demo Shop</title>
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+{{header}}
+<main>
+  <h1>Your cart</h1>
+  <p id="cart-empty" hidden>Your cart is empty.</p>
+  <table class="cart-table" id="cart-table" hidden>
+    <caption class="visually-hidden">Items in your cart</caption>
+    <thead>
+      <tr><th scope="col">Product</th><th scope="col">Price</th><th scope="col">Quantity</th><th scope="col">Subtotal</th><th scope="col"><span class="visually-hidden">Remove</span></th></tr>
+    </thead>
+    <tbody id="cart-rows"></tbody>
+  </table>
+  <p class="cart-total">Total: <strong id="cart-total">$0.00</strong></p>
+  <a href="/checkout" class="btn" id="{{id:checkout}}">{{label:checkout}}</a>
+</main>
+{{footer}}
+<script src="/static/js/common.js"></script>
+<script src="/static/js/cart.js"></script>
+</body>
+</html>

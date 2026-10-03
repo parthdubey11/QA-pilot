@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Checkout | Demo Shop</title>
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+{{header}}
+<main>
+  <h1>Checkout</h1>
+  <p>Order total: <strong id="checkout-total">$0.00</strong></p>
+  <p class="note">This is a demo shop: no payment is taken. Use any 16-digit test card number, e.g. 4242 4242 4242 4242.</p>
+  <form id="checkout-form" class="stack" novalidate>
+    <label for="full_name">Full name</label>
+    <input id="full_name" name="full_name" autocomplete="name">
+    <label for="address">Street address</label>
+    <input id="address" name="address" autocomplete="street-address">
+    <label for="city">City</label>
+    <input id="city" name="city" autocomplete="address-level2">
+    <label for="country">Country</label>
+    <select id="country" name="country" autocomplete="country-name">
+      <option value="">Choose a country</option>
+      <option>India</option>
+      <option>United Kingdom</option>
+      <option>United States</option>
+    </select>
+    <label for="card_number">Card number (test)</label>
+    <input id="card_number" name="card_number" inputmode="numeric" autocomplete="off">
+    <label for="promo_code">Promo code (optional)</label>
+    <input id="promo_code" name="promo_code" autocomplete="off">
+    <p id="promo-status" role="status"></p>
+    <button type="submit" class="btn" id="{{id:place_order}}" data-action="place-order">{{label:place_order}}</button>
+  </form>
+  <p role="alert" id="checkout-error" class="error"></p>
+  <div id="order-confirmation" role="status"></div>
+</main>
+{{footer}}
+<script src="/static/js/common.js"></script>
+<script src="/static/js/checkout.js"></script>
+</body>
+</html>

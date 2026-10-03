@@ -1,0 +1,19 @@
+.env
+__pycache__/
+*.pyc
+.venv/
+.pytest_cache/
+node_modules/
+dist/
+storage/*
+!storage/.gitkeep
+*.db
+
+# Secrets and local-only files
+.env.*
+!.env.example
+*.pem
+*.key
+.claude/
+eval/results/
+*.log
