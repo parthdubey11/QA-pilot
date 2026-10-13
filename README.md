@@ -4,7 +4,9 @@
 English ("test signup, login and add-to-cart"), and AI agents open a real browser, explore the site, plan test
 cases (including edge cases), run them, judge the results, report bugs with screenshots and reproduction steps,
 and audit accessibility (WCAG). You watch the run live. Passing tests are saved, re-run on a schedule, and heal
-themselves when the UI changes.
+themselves when the UI changes. Everything a run finds goes into a RAG memory (ChromaDB vector store, LangChain,
+LangGraph): it catches duplicate and returning bugs, guides self-healing, and answers plain-English questions
+about the project's testing history.
 
 Final-year CSE project. The full brief is in [`claude.md`](claude.md).
 
@@ -19,9 +21,11 @@ Final-year CSE project. The full brief is in [`claude.md`](claude.md).
 2. **Add a project** with the base URL `https://shop-172-198-59-99.sslip.io/`.
 3. **Start a run**, e.g. "test signup and adding a product to the cart", and watch the agents work live.
    They find planted bugs such as the out-of-stock item that can still be added to the cart.
+4. Open a bug to see **similar bugs**, or the project's **Ask history** tab to ask about past results,
+   e.g. "Which bugs were found in the cart, and are they fixed?".
 
 The public server shares a free AI quota, so each account gets 2 AI runs a day (max 6 tests per run). Replays of
-saved tests are unlimited. If the link doesn't load, the server may be paused to save credits; try again later.
+saved tests are unlimited, and 10 "Ask history" questions a day. If the link doesn't load, the server may be paused to save credits; try again later.
 
 | Project overview | Live run |
 |---|---|
@@ -99,14 +103,15 @@ Requires Docker Desktop (on Windows, with WSL 2).
    ```sh
    docker compose up -d --build
    ```
-   The first build downloads the Playwright image (~2 GB). `docker compose ps` should show five services.
+   The first build downloads the Playwright image (~2 GB). `docker compose ps` should show six services.
    The API and worker wait for MongoDB's healthcheck.
 3. **Open http://localhost:5173** and create an account. The sidebar should show *API: OK* and *Database: OK*.
 4. **Add a project.** Name `Demo Shop`, URL **`http://demo-shop:8000`** (the Docker network name the worker
    uses; `localhost:8080` only works from your own browser), and tick "I own this site or am authorised to test
    it". Optional: under *Settings → Test credentials*, add `demo@shop.test` / `demo1234` so the agents can log in.
 5. **Start a run.** *New run*, e.g. "test signup, login and cart", then watch the live feed. When it finishes,
-   open the report, the Bugs page and the Accessibility page, then save or replay the passing tests.
+   open the report, the Bugs page and the Accessibility page, then save or replay the passing tests. Ask
+   about the results on the project's *Ask history* tab.
 
 | Service   | URL                          | Notes                                   |
 |-----------|------------------------------|-----------------------------------------|
@@ -114,10 +119,11 @@ Requires Docker Desktop (on Windows, with WSL 2).
 | api       | http://localhost:8000/health | FastAPI; interactive docs at `/docs`    |
 | worker    | —                            | `docker compose logs -f worker`         |
 | mongo     | mongodb://localhost:27017    | Browse with MongoDB Compass             |
+| chroma    | — (internal, port 8000)      | Vector store for the RAG memory         |
 | demo-shop | http://localhost:8080        | Buggy test shop, see `demo-shop/GROUND_TRUTH.md`; `POST /reset` restores it |
 
-MongoDB data lives in the `mongo-data` volume and screenshots in `qapilot-files` (shared by api and
-worker). Beanie creates collections and indexes on startup, so there are no migrations: add a model to
+MongoDB data lives in the `mongo-data` volume, the vector store in `chroma-data`, and screenshots in
+`qapilot-files` (shared by api and worker). Beanie creates collections and indexes on startup, so there are no migrations: add a model to
 `backend/app/models/` and list it in `DOCUMENT_MODELS`.
 
 **Troubleshooting**
