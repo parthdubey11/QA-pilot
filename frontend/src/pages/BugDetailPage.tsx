@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Link, useParams } from 'react-router-dom'
-import { bugKeys, bugScreenshotPath, getBug, updateBugStatus, type BugStatus } from '../api/bugs'
+import { bugKeys, bugScreenshotPath, getBug, similarBugs, updateBugStatus, type BugStatus } from '../api/bugs'
 import { AuthImage } from '../components/AuthImage'
 import { BugStatusBadge, SeverityBadge } from '../components/Badges'
 import { Alert, Button, Card } from '../components/ui'
@@ -12,6 +12,32 @@ const ACTIONS: { status: BugStatus; label: string; variant: 'primary' | 'seconda
   { status: 'ignored', label: 'Ignore', variant: 'secondary' },
   { status: 'open', label: 'Reopen', variant: 'secondary' },
 ]
+
+/** Bugs that read like this one, found by semantic search in the project's RAG memory (no LLM call). */
+function SimilarBugs({ bugId }: { bugId: string }) {
+  const similar = useQuery({ queryKey: bugKeys.similar(bugId), queryFn: () => similarBugs(bugId) })
+  if (similar.isError) return null // optional panel: hidden when the vector store is unavailable
+  return (
+    <Card title="Similar bugs" description="Found by semantic search over this project's bug history: possible duplicates or regressions.">
+      {similar.isPending ? (
+        <p className="text-sm text-slate-500">Searching…</p>
+      ) : similar.data.length === 0 ? (
+        <p className="text-sm text-slate-500">No similar bugs.</p>
+      ) : (
+        <ul className="space-y-2 text-sm" aria-label="Similar bugs">
+          {similar.data.map((s) => (
+            <li key={s.id} className="flex flex-wrap items-center gap-2">
+              <Link to={`/bugs/${s.id}`} className="font-medium text-indigo-600 hover:underline">{s.title}</Link>
+              <SeverityBadge severity={s.severity} />
+              <BugStatusBadge status={s.status} />
+              <span className="text-xs text-slate-500">{Math.round(s.similarity * 100)}% similar · seen {s.occurrences}×</span>
+            </li>
+          ))}
+        </ul>
+      )}
+    </Card>
+  )
+}
 
 export function BugDetailPage() {
   const bugId = useParams().bugId ?? ''
@@ -98,13 +124,16 @@ export function BugDetailPage() {
             </ul>
           </Card>
         </div>
-        <Card title="Screenshot">
-          {b.has_screenshot ? (
-            <AuthImage key={b.id} path={bugScreenshotPath(b.id)} alt={`Screenshot of: ${b.title}`} className="w-full rounded border border-slate-200" />
-          ) : (
-            <p className="text-sm text-slate-500">No screenshot.</p>
-          )}
-        </Card>
+        <div className="space-y-6">
+          <Card title="Screenshot">
+            {b.has_screenshot ? (
+              <AuthImage key={b.id} path={bugScreenshotPath(b.id)} alt={`Screenshot of: ${b.title}`} className="w-full rounded border border-slate-200" />
+            ) : (
+              <p className="text-sm text-slate-500">No screenshot.</p>
+            )}
+          </Card>
+          <SimilarBugs key={b.id} bugId={b.id} />
+        </div>
       </div>
     </>
   )

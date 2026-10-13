@@ -6,7 +6,7 @@ from fastapi import FastAPI
 
 from app.core.config import get_settings
 from app.core.db import close_db, init_db_with_retry
-from app.routes import accessibility, auth, bugs, health, overview, projects, runs, saved_tests
+from app.routes import accessibility, assistant, auth, bugs, health, overview, projects, runs, saved_tests
 
 settings = get_settings()
 logger = logging.getLogger("qa_pilot")
@@ -30,3 +30,4 @@ app.include_router(bugs.router)
 app.include_router(accessibility.router)
 app.include_router(saved_tests.router)
 app.include_router(overview.router)
+app.include_router(assistant.router)

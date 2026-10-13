@@ -8,3 +8,8 @@ cryptography==44.*
 email-validator==2.2.*
 httpx==0.28.*
 apscheduler==3.11.*
+# RAG memory: vector store (client + local ONNX embeddings), LangChain and LangGraph
+chromadb==1.5.*
+langchain-core==1.6.*
+langchain-chroma==1.1.*
+langgraph==1.2.*

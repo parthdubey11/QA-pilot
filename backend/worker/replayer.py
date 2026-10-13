@@ -19,8 +19,9 @@ from app.models.project import Project
 from app.models.run import Run
 from app.models.saved_test import HealEvent, Notification, SavedStep, SavedTest
 from app.models.test_case import TestCase
+from app.rag import heal_document, remember, test_document
 from app.services.run_steps import StepRecorder, storage_root
-from worker.agents.healer import find_replacement
+from worker.agents.healer import find_replacement, past_repairs
 from worker.browser import BrowserSession, SecretVault, ToolError
 from worker.browser.locators import locators_for, resolve
 from worker.browser.snapshot import REF_ATTRIBUTE
@@ -163,9 +164,14 @@ async def _heal(
     await steps.add("thought", f"Step {index + 1} can't find {lost} — asking the healer", phase="heal",
                     test_case_index=tc.index)
     snapshot = await session.snapshot()
+    repairs = await past_repairs(saved.project_id, step)
+    if repairs:
+        await steps.add("thought", f"Heal memory: {len(repairs)} similar earlier repair(s) — "
+                        + "; ".join(f"{r.title} ({r.similarity:.0%} similar)" for r in repairs),
+                        phase="heal", test_case_index=tc.index)
     try:
         decision = await find_replacement(llm, test_title=saved.title, step=step, previous=done, snapshot=snapshot,
-                                          snapshot_text=session.redact(snapshot.to_text()))
+                                          snapshot_text=session.redact(snapshot.to_text()), repairs=repairs)
     except LLMError as exc:
         raise StepFailed(f"Could not find {lost}; the healer failed: {exc}") from None
     if decision.ref is None:
@@ -246,6 +252,7 @@ async def handle_replay_run(
                 saved.replays += 1
                 saved.heal_history = (saved.heal_history + outcome.heals)[-MAX_HEAL_HISTORY:]
                 await saved.save()
+                await remember(test_document(tc, vault.redact), *(heal_document(saved, e) for e in outcome.heals))
         run.status = "completed"
         await steps.add("info", f"Replay finished: {stats['passed']} passed, {stats['failed']} failed, "
                         f"{stats['healed_steps']} step(s) healed", phase="replay")

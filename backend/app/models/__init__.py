@@ -3,6 +3,7 @@
 from beanie import Document
 
 from app.models.accessibility import A11yAudit, A11yIssue
+from app.models.assistant import AssistantQuestion
 from app.models.bug import Bug
 from app.models.job import Job
 from app.models.project import Credential, Project
@@ -13,9 +14,10 @@ from app.models.user import User
 
 DOCUMENT_MODELS: list[type[Document]] = [
     User, Project, Credential, Job, Run, RunStep, TestCase, Bug, A11yAudit, A11yIssue, SavedTest, Schedule, Notification,
+    AssistantQuestion,
 ]
 
 __all__ = [
-    "DOCUMENT_MODELS", "A11yAudit", "A11yIssue", "Bug", "Credential", "Job", "Notification", "Project", "Run",
+    "DOCUMENT_MODELS", "A11yAudit", "A11yIssue", "AssistantQuestion", "Bug", "Credential", "Job", "Notification", "Project", "Run",
     "RunStep", "SavedTest", "Schedule", "TestCase", "User",
 ]

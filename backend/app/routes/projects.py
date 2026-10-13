@@ -7,6 +7,7 @@ from app.core.deps import CurrentUser, parse_object_id
 from app.core.security import encrypt_secret
 from app.models.base import utcnow
 from app.models.accessibility import A11yAudit, A11yIssue
+from app.models.assistant import AssistantQuestion
 from app.models.bug import Bug
 from app.models.job import Job
 from app.models.project import Credential, Project
@@ -14,6 +15,7 @@ from app.models.run import ACTIVE_RUN_STATUSES, Run, RunStep
 from app.models.saved_test import Notification, SavedTest, Schedule
 from app.models.test_case import TestCase
 from app.models.user import User
+from app.rag import forget_project
 from app.schemas.projects import (
     CredentialCreate,
     CredentialRead,
@@ -115,7 +117,9 @@ async def delete_project(project_id: str, user: CurrentUser) -> Response:
     await Job.find({"payload.run_id": {"$in": [str(i) for i in run_ids]}}).delete()
     await Run.find(Run.project_id == project.id).delete()
     await Credential.find(Credential.project_id == project.id).delete()
+    await AssistantQuestion.find(AssistantQuestion.project_id == project.id).delete()
     await project.delete()
+    await forget_project(project.id)  # its vectors in the RAG memory
     return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 

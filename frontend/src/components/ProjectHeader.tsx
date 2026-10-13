@@ -3,12 +3,13 @@ import type { ReactNode } from 'react'
 import { Link } from 'react-router-dom'
 import { getProject, projectKeys } from '../api/projects'
 
-export type ProjectTab = 'overview' | 'tests' | 'accessibility' | 'schedules' | 'settings' | null
+export type ProjectTab = 'overview' | 'tests' | 'accessibility' | 'ask' | 'schedules' | 'settings' | null
 
 const TABS: { id: Exclude<ProjectTab, null>; label: string; path: string }[] = [
   { id: 'overview', label: 'Overview', path: '' },
   { id: 'tests', label: 'Saved tests', path: '/tests' },
   { id: 'accessibility', label: 'Accessibility', path: '/accessibility' },
+  { id: 'ask', label: 'Ask history', path: '/ask' },
   { id: 'schedules', label: 'Schedules', path: '/schedules' },
   { id: 'settings', label: 'Settings', path: '/settings' },
 ]

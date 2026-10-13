@@ -34,6 +34,7 @@ export type BugFilters = { severity?: Severity[]; status?: BugStatus[]; project_
 export const bugKeys = {
   list: (filters: BugFilters) => ['bugs', filters] as const,
   detail: (id: string) => ['bugs', 'detail', id] as const,
+  similar: (id: string) => ['bugs', 'similar', id] as const,
   all: ['bugs'] as const,
 }
 
@@ -52,3 +53,16 @@ export const getBug = (id: string) => apiFetch<Bug>(`/bugs/${id}`)
 export const updateBugStatus = (id: string, status: BugStatus) =>
   apiFetch<Bug>(`/bugs/${id}`, { method: 'PATCH', body: { status } })
 export const bugScreenshotPath = (id: string) => `/bugs/${id}/screenshot`
+
+export type SimilarBug = {
+  id: string
+  title: string
+  severity: Severity
+  status: BugStatus
+  occurrences: number
+  last_seen_at: string
+  similarity: number
+}
+
+/** Bugs of the same project that read most like this one (vector search in the RAG memory, no LLM call). */
+export const similarBugs = (id: string) => apiFetch<SimilarBug[]>(`/bugs/${id}/similar`)

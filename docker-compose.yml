@@ -12,6 +12,11 @@ services:
       retries: 20
       start_period: 10s
 
+  chroma:
+    image: chromadb/chroma:1.5.9  # vector store for the RAG memory; keep in step with chromadb in requirements.txt
+    volumes:
+      - chroma-data:/data
+
   api:
     build: ./backend
     env_file: .env
@@ -19,6 +24,7 @@ services:
       MONGO_URL: mongodb://mongo:27017
       STORAGE_DIR: /storage
       TEST_MONGO_URL: mongodb://mongo:27017
+      CHROMA_URL: http://chroma:8000
     ports:
       - "8000:8000"
     volumes:
@@ -27,6 +33,8 @@ services:
     depends_on:
       mongo:
         condition: service_healthy
+      chroma:
+        condition: service_started
 
   worker:
     build:
@@ -37,12 +45,15 @@ services:
       MONGO_URL: mongodb://mongo:27017
       STORAGE_DIR: /storage
       TEST_MONGO_URL: mongodb://mongo:27017
+      CHROMA_URL: http://chroma:8000
     volumes:
       - ./backend:/app
       - qapilot-files:/storage
     depends_on:
       mongo:
         condition: service_healthy
+      chroma:
+        condition: service_started
 
   frontend:
     build: ./frontend
@@ -69,3 +80,4 @@ services:
 volumes:
   mongo-data:
   qapilot-files:
+  chroma-data:

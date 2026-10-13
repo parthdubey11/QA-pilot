@@ -13,6 +13,7 @@ from pymongo.asynchronous.database import AsyncDatabase
 from app.models.run import Run
 from app.models.saved_test import Locators, Notification, SavedStep, SavedTest, Schedule
 from app.models.test_case import TestCase
+from app.rag import KnowledgeBase
 from app.services.playwright_export import export_spec
 from app.services.run_steps import StepRecorder
 from tests.conftest import RegisterFn
@@ -247,7 +248,7 @@ async def new_project(client: httpx.AsyncClient, headers: dict[str, str]) -> str
 
 
 async def test_passing_test_is_saved_then_replayed_and_healed(
-    client: httpx.AsyncClient, register: RegisterFn, shop: Shop, storage  # noqa: ANN001, F811
+    client: httpx.AsyncClient, register: RegisterFn, shop: Shop, storage, knowledge: KnowledgeBase  # noqa: ANN001, F811
 ) -> None:
     headers = await register()
     pid = await new_project(client, headers)
@@ -298,6 +299,10 @@ async def test_passing_test_is_saved_then_replayed_and_healed(
     assert any(s["phase"] == "heal" and "Create account" in s["message"] and "Register" in s["message"] for s in steps)
     cases = (await client.get(f"/runs/{run['id']}/test-cases", headers=headers)).json()
     assert cases[0]["status"] == "passed" and cases[0]["has_final_screenshot"]
+    # Both runs' results and the three repairs are in the RAG memory, for the healer and the assistant.
+    repairs = await knowledge.search(pid, "button Create account renamed", kinds=["heal"], k=5)
+    assert len(repairs) == 3 and any('button "Register"' in r.text for r in repairs)
+    assert len(await knowledge.search(pid, "Sign up with valid details", kinds=["test"], k=5)) == 2
 
 
 # ---------- export ----------

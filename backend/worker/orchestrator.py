@@ -21,6 +21,7 @@ from app.models.job import Job
 from app.models.project import Credential, Project
 from app.models.run import Run
 from app.models.test_case import TestCase
+from app.rag import a11y_document, remember, test_document
 from app.services.run_steps import StepRecorder, storage_root
 from worker.agents.executor import ExecutionResult, execute_test
 from worker.agents.explorer import SiteMap, SitePage, explore
@@ -104,9 +105,12 @@ async def run_accessibility_audit(
             audit_llm = None
             await steps.add("observation", f"LLM checks stopped for the rest of the audit: {result.llm_unavailable}",
                             phase="audit")
-        for finding in result.findings:
-            await A11yIssue(project_id=project.id, run_id=run.id, page_path=path, page_url=result.url,
-                            **finding.model_dump() | {"description": redact(finding.description)}).insert()
+        issues = [A11yIssue(project_id=project.id, run_id=run.id, page_path=path, page_url=result.url,
+                            **finding.model_dump() | {"description": redact(finding.description)})
+                  for finding in result.findings]
+        for issue in issues:
+            await issue.insert()
+        await remember(*(a11y_document(issue) for issue in issues))
         issue_count += len(result.findings)
         page_scores.append(A11yPageScore(path=path, url=result.url, title=result.title, score=result.score,
                                          issues=len(result.findings), same_as=paths[1:]))
@@ -155,6 +159,10 @@ async def report_failure(
         stats["bugs_repeated"] += 1
         message = (f"Seen again ({bug.occurrences}×){' — reopened, it was marked fixed' if outcome.reopened else ''}: "
                    f"{bug.title}")
+    if outcome.retrieval == "semantic" and outcome.top_match:
+        title, similarity = outcome.top_match
+        message += (f"\nBug memory: compared with the {outcome.compared_with} most similar past bug(s); "
+                    f"closest: \"{title}\" ({similarity:.0%} similar)")
     await steps.add("info", message, phase="report", test_case_index=tc.index, action={"bug_id": str(bug.id)})
 
 
@@ -290,6 +298,7 @@ async def handle_run_job(
                                              redact=vault.redact)
                 tc.finished_at = tc.updated_at = utcnow()
                 await tc.save()
+                await remember(test_document(tc, vault.redact))
 
         run.status = "completed"
         await steps.add("info", "Run finished")

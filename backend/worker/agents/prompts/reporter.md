@@ -22,6 +22,8 @@ When a field, message or step shows such a placeholder, the REAL value was typed
 a mistake and the site never saw the placeholder text.
 
 ## Bugs already reported for this project
+The most similar ones from the project's whole history (semantic search; "N% similar" is how close the wording
+is, not proof). A bug marked "fixed" that matches is a regression: still answer with its number.
 {existing_bugs}
 
 ## How to write the report

@@ -33,9 +33,10 @@ on a schedule, and self-heal when the UI changes.
 | Live updates | Server-Sent Events (SSE) from API to dashboard during a run |
 | Browser automation | Playwright (Python), headless Chromium in the worker |
 | LLM | Pluggable provider interface. Default: Google Gemini (free tier, vision). Also: Groq, Ollama |
+| RAG memory | ChromaDB vector store (own `chroma` service) used through LangChain (`langchain-chroma`); embeddings: all-MiniLM-L6-v2 run locally with ONNX (no LLM quota). Indexes bugs, test results, a11y issues and heals per project (`backend/app/rag/`). Used by the Reporter (similar past bugs → dedup/regressions), the Healer (earlier repairs), "similar bugs", and the "Ask history" assistant (LangGraph corrective-RAG graph). MongoDB stays the source of truth |
 | Accessibility | axe-core injected via Playwright + LLM keyboard-navigation checks |
 | File storage | Screenshots on local disk (`storage/`), served by the API (can switch to S3 later) |
-| Dev setup | Docker Compose with 5 services: mongo, api, worker, frontend, demo-shop. Named volumes: `mongo-data` (database) and `qapilot-files` (screenshots, shared by api and worker). Mongo healthcheck so api/worker start after it is ready. Worker image based on the official Playwright Python image. To browse data, use MongoDB Compass on `mongodb://localhost:27017` |
+| Dev setup | Docker Compose with 6 services: mongo, chroma, api, worker, frontend, demo-shop. Named volumes: `mongo-data` (database), `chroma-data` (vector store) and `qapilot-files` (screenshots, shared by api and worker). Mongo healthcheck so api/worker start after it is ready. Worker image based on the official Playwright Python image. To browse data, use MongoDB Compass on `mongodb://localhost:27017` |
 | Demo target | `demo-shop/`: small deliberately buggy web shop |
 | Tests | pytest (backend, against a real MongoDB with a throwaway database per test; start it with `docker compose up -d mongo`), Vitest (frontend) |
 
@@ -96,7 +97,7 @@ Settings (LLM provider, test credentials, team members).
 qa-pilot/
   CLAUDE.md
   README.md
-  docker-compose.yml      # mongo, api, worker, frontend, demo-shop
+  docker-compose.yml      # mongo, chroma, api, worker, frontend, demo-shop
   .env.example            # GEMINI_API_KEY=, LLM_PROVIDER=gemini, JWT_SECRET=, MONGO_URL=mongodb://mongo:27017, MONGO_DB=qapilot
   backend/
     app/

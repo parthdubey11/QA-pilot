@@ -21,6 +21,13 @@ services:
       retries: 20
       start_period: 20s
 
+  chroma:
+    image: chromadb/chroma:1.5.9  # vector store for the RAG memory; keep in step with chromadb in requirements.txt
+    restart: unless-stopped
+    logging: *logging
+    volumes:
+      - chroma-data:/data
+
   api:
     build: ./backend
     restart: unless-stopped
@@ -29,12 +36,15 @@ services:
     environment:
       MONGO_URL: mongodb://mongo:27017
       STORAGE_DIR: /storage
+      CHROMA_URL: http://chroma:8000
     command: ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--proxy-headers", "--forwarded-allow-ips", "*"]
     volumes:
       - qapilot-files:/storage
     depends_on:
       mongo:
         condition: service_healthy
+      chroma:
+        condition: service_started
 
   worker:
     build:
@@ -46,12 +56,15 @@ services:
     environment:
       MONGO_URL: mongodb://mongo:27017
       STORAGE_DIR: /storage
+      CHROMA_URL: http://chroma:8000
     shm_size: 1gb  # Chromium needs more shared memory than Docker's 64 MB default
     volumes:
       - qapilot-files:/storage
     depends_on:
       mongo:
         condition: service_healthy
+      chroma:
+        condition: service_started
 
   demo-shop:
     build: ./demo-shop
@@ -94,5 +107,6 @@ services:
 volumes:
   mongo-data:
   qapilot-files:
+  chroma-data:
   caddy-data:
   caddy-config:

@@ -1,5 +1,6 @@
 """Reporter agent (bug reports + dedup), bug API, and the downloadable HTML report. LLM always mocked."""
 
+import re
 from pathlib import Path
 
 import httpx
@@ -104,7 +105,8 @@ async def test_duplicate_is_merged_into_existing_bug(database: AsyncDatabase) ->
     assert outcome.bug.occurrences == 2 and outcome.bug.run_ids == [first_run, second_run]
     assert outcome.bug.title == "Signup accepts duplicate email addresses"  # original report kept
     assert outcome.bug.screenshot_path == "runs/y/final.png"  # latest evidence
-    assert "[1] (open, high) Signup accepts duplicate email addresses" in llm.prompts(BugReport)[0]
+    assert re.search(r"\[1\] \(open, high, \d+% similar\) Signup accepts duplicate email addresses",
+                     llm.prompts(BugReport)[0])  # found by semantic search (tests/test_rag.py)
 
 
 async def test_exact_title_repeat_is_merged_even_if_model_misses_it(database: AsyncDatabase) -> None:

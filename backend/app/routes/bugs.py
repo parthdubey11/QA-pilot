@@ -4,12 +4,15 @@ from beanie import PydanticObjectId
 from fastapi import APIRouter, HTTPException, Query, status
 from fastapi.responses import FileResponse
 
+from app.core.config import get_settings
 from app.core.deps import CurrentUser, parse_object_id
 from app.models.base import utcnow
 from app.models.bug import SEVERITY_ORDER, Bug, BugStatus, Severity
 from app.models.project import Project
 from app.models.user import User
+from app.rag import bug_document, get_knowledge_base
 from app.routes.runs import screenshot_file
+from app.schemas.assistant import SimilarBugRead
 from app.schemas.bugs import BugRead, BugUpdate
 
 router = APIRouter(prefix="/bugs", tags=["bugs"])
@@ -93,3 +96,24 @@ async def update_bug(bug_id: str, body: BugUpdate, user: CurrentUser) -> BugRead
 async def bug_screenshot(bug_id: str, user: CurrentUser) -> FileResponse:
     bug, _ = await get_owned_bug(user, bug_id)
     return screenshot_file(bug.screenshot_path)
+
+
+@router.get("/{bug_id}/similar", response_model=list[SimilarBugRead])
+async def similar_bugs(bug_id: str, user: CurrentUser, limit: int = Query(5, ge=1, le=20)) -> list[SimilarBugRead]:
+    """Bugs of the same project that read most like this one (vector search; no LLM call). Empty if the
+    knowledge base is unavailable."""
+    bug, _ = await get_owned_bug(user, bug_id)
+    kb = get_knowledge_base()
+    if kb is None:
+        return []
+    doc_id, doc = bug_document(bug)
+    try:
+        hits = await kb.search(bug.project_id, doc.page_content, kinds=["bug"], k=limit, exclude_ids=(doc_id,),
+                               min_similarity=get_settings().rag_min_similarity)
+    except Exception:  # noqa: BLE001 - the panel is optional
+        return []
+    ids = [PydanticObjectId(h.ref_id) for h in hits if PydanticObjectId.is_valid(h.ref_id)]
+    found = {str(b.id): b for b in await Bug.find({"_id": {"$in": ids}, "project_id": bug.project_id}).to_list()}
+    return [SimilarBugRead(id=h.ref_id, title=b.title, severity=b.severity, status=b.status, occurrences=b.occurrences,
+                           last_seen_at=b.last_seen_at, similarity=h.similarity)
+            for h in hits if (b := found.get(h.ref_id)) is not None]

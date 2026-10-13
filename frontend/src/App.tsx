@@ -3,6 +3,7 @@ import { Link, Navigate, Route, Routes } from 'react-router-dom'
 import { RequireAuth } from './auth/RequireAuth'
 import { AppLayout } from './components/AppLayout'
 import { AccessibilityPage } from './pages/AccessibilityPage'
+import { AskPage } from './pages/AskPage'
 import { BugDetailPage } from './pages/BugDetailPage'
 import { BugsPage } from './pages/BugsPage'
 import { LoginPage, RegisterPage } from './pages/AuthPages'
@@ -45,6 +46,7 @@ export default function App() {
           <Route path="/projects/:projectId/runs/new" element={<NewRunPage />} />
           <Route path="/projects/:projectId/accessibility" element={<AccessibilityPage />} />
           <Route path="/projects/:projectId/tests" element={<SavedTestsPage />} />
+          <Route path="/projects/:projectId/ask" element={<AskPage />} />
           <Route path="/projects/:projectId/schedules" element={<SchedulesPage />} />
           <Route path="/notifications" element={<NotificationsPage />} />
           <Route path="/runs/:runId" element={<RunPage />} />

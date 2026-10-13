@@ -57,6 +57,9 @@ flowchart LR
         end
     end
 
+    agents -- "index + retrieve similar bugs / repairs" --> chroma[("ChromaDB vector store<br/>LangChain · MiniLM embeddings")]
+    api -- "Ask history: LangGraph RAG<br/>similar bugs" --> chroma
+
     orch -- "run_steps, test_cases, bugs, a11y_issues" --> db
     agents -- "typed tools: goto, click, type, …<br/>snapshot = numbered a11y tree" --> browser["Headless Chromium<br/>(Playwright)"]
     browser --> site(["Site under test<br/>e.g. demo-shop"])
@@ -233,6 +236,29 @@ script** downloads a `@playwright/test` spec (test logins become `QA_CRED_…` e
 Demo: `curl -X POST http://localhost:8080/admin/ui-variant -H "Content-Type: application/json" -d '{"variant":"v2"}'`
 renames buttons and labels in the demo shop; replaying then heals the saved tests. `POST /reset` switches back.
 
+**RAG memory (vector search over the QA history).** Every bug report, test result, accessibility issue and
+self-healing repair is embedded and stored in a **ChromaDB** vector store (the `chroma` service), through
+**LangChain**. Embeddings come from `all-MiniLM-L6-v2`, run locally with ONNX on the CPU, so they cost no LLM
+quota. MongoDB stays the source of truth; the store only holds text and ids, and statuses are read back from
+MongoDB. It is used in four places (`backend/app/rag/`):
+
+- **Reporter** (retrieval-augmented dedup): when a test fails, the bugs shown to the LLM are the most similar ones
+  from the project's *whole* history, not just the latest 40, so a bug marked fixed months ago is recognised as a
+  regression and reopened. The live log says which past bug was closest ("Bug memory: … 82% similar").
+- **Healer**: the prompt includes the most similar earlier repairs on the same site (e.g. "Sign Up" → "Create
+  Account" healed in another saved test).
+- **Similar bugs** on every bug page: possible duplicates and regressions, by vector search alone (no LLM call).
+- **Ask history** (project → **Ask history**): questions in plain English ("Which bugs keep coming back?").
+  A **LangGraph** agent does *corrective RAG*: retrieve → the LLM grades which documents help → if none do, it
+  rewrites the search query once and retrieves again → it answers from the kept documents only, citing them as
+  [n]. Each LLM step is a LangChain LCEL chain (`PromptTemplate | llm`) over QA Pilot's own provider layer.
+  Usually 2 LLM calls, at most 4; `MAX_ASSISTANT_QUESTIONS_PER_USER_PER_DAY` caps them on public servers.
+
+The worker indexes existing data automatically when the store is empty (e.g. after an upgrade);
+`docker compose exec worker python -m app.rag.reindex` rebuilds it by hand. Settings: `RAG_ENABLED`,
+`EMBEDDING_MODEL` (`minilm`, or `hashing` for offline use), `RAG_BUG_CANDIDATES`, `RAG_MIN_SIMILARITY`. If Chroma
+is down, runs carry on without memory (the Reporter falls back to the most recent bugs).
+
 **Schedules** (project → **Schedules**): cron schedules run by APScheduler inside the worker (synced from MongoDB
 every 30 s) replay the project's saved tests. If a saved test that passed before fails, you get an in-app
 **notification** (sidebar → Notifications); no email is sent.
@@ -251,6 +277,7 @@ API: `POST /projects/{id}/runs` (one active run per project), `GET /runs/{id}`, 
 `/runs/{id}/report.html`, `GET /bugs?severity=&status=&project_id=&run_id=`, `GET/PATCH /bugs/{id}`,
 `GET /projects/{id}/accessibility[?run_id=]`, `GET /projects/{id}/saved-tests`, `POST /projects/{id}/replays`,
 `GET /saved-tests/{id}/export.spec.ts`, `GET/POST /projects/{id}/schedules`, `PATCH/DELETE /schedules/{id}`, `GET /notifications`,
+`GET /bugs/{id}/similar`, `GET/POST /projects/{id}/assistant` (ask history),
 `/runs/{id}/steps`, `/runs/{id}/steps/{index}/screenshot`, and `GET /runs/{id}/stream` (Server-Sent Events:
 `run`, `test_case`, `step`, `end`; resume with `?after=<last step index>`).
 

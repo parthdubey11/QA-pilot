@@ -13,6 +13,11 @@ The element used to be: {old_element}
 ## Steps already done in this replay
 {previous}
 
+## Earlier repairs on this site
+Similar elements that were already healed in this project's saved tests. A hint about how the site was renamed,
+not proof: the answer must still be an element on the current page.
+{past_repairs}
+
 ## Current page snapshot
 {snapshot}
 

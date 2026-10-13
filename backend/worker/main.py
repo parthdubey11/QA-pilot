@@ -16,6 +16,7 @@ from app.core.db import close_db, init_db_with_retry
 from app.models.base import utcnow
 from app.models.job import Job
 from app.models.run import Run
+from app.rag.reindex import reindex_if_empty
 from worker.orchestrator import handle_run_job
 from worker.scheduler import start_scheduler
 
@@ -97,6 +98,8 @@ async def main() -> None:
     logger.info("connected to MongoDB")
     if recovered := await recover_interrupted():
         logger.warning("marked %d interrupted job(s) as failed", recovered)
+    if counts := await reindex_if_empty():
+        logger.info("knowledge base rebuilt from MongoDB: %s", counts)
     scheduler, _ = start_scheduler()
     logger.info("scheduler started (cron schedules are synced from MongoDB every 30 s)")
     try:

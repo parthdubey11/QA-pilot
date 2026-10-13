@@ -39,7 +39,7 @@ class Settings(BaseSettings):
     action_delay_ms: int = 300  # small pause after every browser action (be gentle with the target site)
     navigation_timeout_ms: int = 20000
     # Hosts the browser must never reach (our own services, cloud metadata). Comma-separated; see core/targets.py.
-    blocked_target_hosts: str = "mongo,api,worker,frontend,caddy,metadata.google.internal,metadata"
+    blocked_target_hosts: str = "mongo,api,worker,frontend,caddy,chroma,metadata.google.internal,metadata"
     # Public deployments (0 / "" = no limit, the default for local use)
     allowed_target_hosts: str = ""  # comma-separated; if set, projects may only test these hosts (and their subdomains)
     registration_code: str = ""  # if set, registering needs this invite code
@@ -54,6 +54,14 @@ class Settings(BaseSettings):
     a11y_max_pages: int = 8  # distinct page templates audited per run (/products/1 and /products/2 count once)
     a11y_max_tabs: int = 80  # Tab presses per page in the keyboard check
     worker_poll_seconds: float = 5.0
+    # RAG memory (app/rag): bugs, test results, a11y issues and heals embedded into a ChromaDB vector store.
+    rag_enabled: bool = True
+    chroma_url: str = ""  # http://chroma:8000 in Docker; "" = embedded store in STORAGE_DIR/chroma (one process only)
+    chroma_collection: str = "qapilot_knowledge"
+    embedding_model: str = "minilm"  # minilm: local ONNX all-MiniLM-L6-v2 (no API quota) | hashing: no download
+    rag_bug_candidates: int = 8  # similar past bugs shown to the Reporter for dedup / regression detection
+    rag_min_similarity: float = 0.3  # cosine similarity below which a "similar" bug or past repair isn't shown
+    max_assistant_questions_per_user_per_day: int = 0  # "Ask QA history" questions (each costs 2-4 LLM calls)
 
 
 @lru_cache
